@@ -9,8 +9,9 @@ fetch("db.php", {
   console.log("Server response:", data);
   // agar data save ho gaya to redirect
   if (data.includes("success")) {
-    window.location.href = "index.php";
+    window.location.href = "home.php";
   }
 })
 .catch(err => console.error(err));
+
 
