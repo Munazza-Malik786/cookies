@@ -2,123 +2,164 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>User Info Page</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .hidden { display: none; }
-    .popup {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .popup-content {
-      background: white; padding: 20px; border-radius: 12px;
-      text-align: center; max-width: 300px;
-    }
-    button {
-      margin-top: 10px; padding: 8px 16px;
-      border: none; border-radius: 8px;
-      background: #007bff; color: white; cursor: pointer;
-    }
-    button:hover { background: #0056b3; }
-    .card { border: 1px solid #ccc; padding: 12px; margin-top: 12px; border-radius: 8px; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Munazza's Site</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #007bff, #00c6ff);
+      color: white;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    .cookies-popup {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+      color: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      z-index: 1000;
+    }
+    .cookies-popup button {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .profile-card {
+      display: none;
+      background: white;
+      color: black;
+      max-width: 350px;
+      margin: 60px auto;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    .profile-card img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-bottom: 15px;
+      border: 3px solid #007bff;
+    }
+
+    .profile-card h2 {
+      margin: 5px 0;
+      color: #007bff;
+    }
+
+    .profile-card p {
+      margin: 5px 0;
+      color: #333;
+    }
+
+    .google-btn {
+      margin-top: 20px;
+      display: none;
+      justify-content: center;
+    }
+  </style>
 </head>
 <body>
 
-  <h1>User Info Page</h1>
+  <h1 style="margin-top:40px;">✨ Welcome to Munazza's Site ✨</h1>
 
-  <!-- Cookies Popup -->
-  <div id="cookiePopup" class="popup">
-    <div class="popup-content">
-      <h2>We use cookies 🍪</h2>
-      <p>This site uses cookies to improve your experience. Please accept to continue.</p>
-      <button onclick="acceptCookies()">Accept Cookies</button>
-    </div>
+  <!-- Cookies popup -->
+  <div class="cookies-popup" id="cookiesPopup">
+    <p>We use cookies to personalize content and analyze traffic. Please accept to continue.</p>
+    <button onclick="acceptCookies()">Accept Cookies</button>
   </div>
 
-  <!-- Main Content -->
-  <div id="content" class="hidden">
-    <!-- Cookies -->
-    <div class="card">
-      <h2>Cookies:</h2>
-      <pre id="cookieData"></pre>
-    </div>
+  <!-- Google Auth button -->
+  <div id="googleBtn" class="google-btn"></div>
 
-    <!-- Location -->
-    <div class="card">
-      <h2>Location:</h2>
-      <p id="locationText">Not fetched yet</p>
-      <button onclick="getLocation()">Get Location</button>
-    </div>
-
-    <!-- Google Auth -->
-    <div class="card">
-      <h2>Google Auth:</h2>
-      <div id="g_id_onload"
-        data-client_id="YOUR_GOOGLE_CLIENT_ID"
-        data-callback="handleCredentialResponse">
-      </div>
-      <div class="g_id_signin" data-type="standard"></div>
-      <div id="userInfo"></div>
-    </div>
+  <!-- Profile Card -->
+  <div class="profile-card" id="profileCard">
+    <img id="userImage" src="" alt="Profile Picture">
+    <h2 id="userName"></h2>
+    <p id="userEmail"></p>
+    <p><b>Location:</b> <span id="userLocation"></span></p>
   </div>
 
-  <script>
-    // 🔹 Accept cookies
-    function acceptCookies() {
-      document.cookie = "cookiesAccepted=true; path=/";
-      document.getElementById("cookiePopup").classList.add("hidden");
-      document.getElementById("content").classList.remove("hidden");
-      showCookies();
-    }
+<script>
+  // ✅ Google Client ID
+  const CLIENT_ID = "426214930117-sq8hjns95iusc87cnebk0arsm8o5ql2v.apps.googleusercontent.com";
 
-    // 🔹 Show cookies
-    function showCookies() {
-      document.getElementById("cookieData").textContent = document.cookie;
-    }
-
-    // 🔹 Location fetch
-    function getLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((pos) => {
-          document.getElementById("locationText").textContent =
-            `Lat: ${pos.coords.latitude}, Lng: ${pos.coords.longitude}`;
-        });
+  // ✅ Check cookies
+  window.onload = () => {
+    if(localStorage.getItem("cookiesAccepted")){
+      document.getElementById("cookiesPopup").style.display = "none";
+      if(!localStorage.getItem("userData")){
+        showGoogleBtn();
       } else {
-        alert("Geolocation not supported");
+        showProfile(JSON.parse(localStorage.getItem("userData")));
       }
     }
+  }
 
-    // 🔹 Google Sign-In callback
-    function handleCredentialResponse(response) {
-      const data = parseJwt(response.credential);
-      document.getElementById("userInfo").innerHTML =
-        `<p>Name: ${data.name}</p><p>Email: ${data.email}</p>`;
-      document.cookie = `userName=${data.name}; path=/`;
-      document.cookie = `userEmail=${data.email}; path=/`;
-      showCookies();
-    }
+  function acceptCookies(){
+    localStorage.setItem("cookiesAccepted", true);
+    document.getElementById("cookiesPopup").style.display = "none";
+    showGoogleBtn();
+  }
 
-    // Decode JWT token (Google returns ID token)
-    function parseJwt(token) {
-      let base64Url = token.split('.')[1];
-      let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      return JSON.parse(jsonPayload);
-    }
+  function showGoogleBtn(){
+    document.getElementById("googleBtn").style.display = "flex";
+    google.accounts.id.initialize({
+      client_id: CLIENT_ID,
+      callback: handleCredentialResponse
+    });
+    google.accounts.id.renderButton(
+      document.getElementById("googleBtn"),
+      { theme: "outline", size: "large" }
+    );
+  }
 
-    // 🔹 Auto check cookie on load
-    window.onload = () => {
-      if (document.cookie.includes("cookiesAccepted=true")) {
-        document.getElementById("cookiePopup").classList.add("hidden");
-        document.getElementById("content").classList.remove("hidden");
-        showCookies();
-      }
-    };
-  </script>
+  function handleCredentialResponse(response){
+    const data = parseJwt(response.credential);
+
+    // Get Location
+    navigator.geolocation.getCurrentPosition(pos => {
+      data.location = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+      localStorage.setItem("userData", JSON.stringify(data));
+      showProfile(data);
+    });
+  }
+
+  function parseJwt(token) {
+    let base64Url = token.split('.')[1];
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  }
+
+  function showProfile(user){
+    document.getElementById("googleBtn").style.display = "none";
+    document.getElementById("profileCard").style.display = "block";
+
+    document.getElementById("userName").innerText = user.name;
+    document.getElementById("userEmail").innerText = user.email;
+    document.getElementById("userImage").src = user.picture;
+    document.getElementById("userLocation").innerText = user.location || "Fetching...";
+  }
+</script>
+
 </body>
 </html>
